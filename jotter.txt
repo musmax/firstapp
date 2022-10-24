@@ -1,0 +1,484 @@
+full CRUD with core node
+
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const fullpath = path.join(__dirname, "msg.js");
+console.log(fullpath);
+let port = 4000;
+
+function requestHandler(req, res) {
+  if (req.url === "/books" && req.method === "GET") {
+    addAllBooks(req, res);
+  } else if (req.url === "/books" && req.method === "POST") {
+    addNewBook(req, res);
+  } else if (req.url === "/books" && req.method === "PUT") {
+    updateBook(req, res);
+  } else if (req.url === "/books" && req.method === "DELETE") {
+    deleteBook(req, res);
+  }
+}
+
+function addAllBooks(req, res) {
+  fs.readFile(fullpath, "utf-8", (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      console.log(err);
+      res.end('Couldn"t load all books');
+    }
+    res.end(data);
+  });
+}
+
+function addNewBook(req, res) {
+  const body = [];
+  req.on("data", (chunk) => {
+    body.push(chunk);
+    console.log(body);
+  });
+  req.on("end", () => {
+    const bufferTostring = Buffer.concat(body).toString();
+    console.log(bufferTostring);
+
+    fs.readFile(fullpath, "utf-8", (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        console.log(err);
+        res.end('Couldn"t load all books');
+      }
+      let oldData = JSON.parse(data);
+      let newData = JSON.parse(bufferTostring);
+      const newBookdataIndex = oldData.push(newData);
+      const display = [...oldData];
+      console.log(display);
+
+      fs.writeFile(fullpath, JSON.stringify(oldData), (err) => {
+        if (err) {
+          console.log(err);
+          res.end("error has occured");
+        }
+        console.log("Book successfully added");
+        res.end(JSON.stringify(newData));
+      });
+    });
+  });
+}
+
+function updateBook(req, res) {
+  const body = [];
+  req.on("data", (chunk) => {
+    body.push(chunk);
+    console.log(body);
+  });
+  req.on("end", () => {
+    const bufferTostring = Buffer.concat(body).toString();
+    const newData = JSON.parse(bufferTostring);
+    const newBookIndex = newData.id;
+
+    fs.readFile(fullpath, "utf-8", (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        console.log(err);
+        res.end('Couldn"t load all books');
+      }
+      let oldData = JSON.parse(data);
+      let compareIndex = oldData.findIndex(
+        (oldDataObject) => oldDataObject.id === newBookIndex
+      );
+      if (compareIndex === -1) {
+        res.writeHead(500);
+        console.log("error occured in loading");
+        res.end('error in looking for index');
+        return;
+      }
+      const updateNow = { ...oldData[compareIndex], ...newData };
+      oldData[compareIndex] = updateNow;
+
+      fs.writeFile(fullpath, JSON.stringify(oldData), (err) => {
+        if (err) {
+         res.writeHead(404);
+          console.log(err);
+          res.end("error has occured since Id is not found");
+        }
+        console.log("Book successfully added");
+        res.end(JSON.stringify(newData));
+      });
+    });
+  });
+}
+
+function deleteBook(req,res){
+    const body = [];
+    req.on("data", (chunk) => {
+      body.push(chunk);
+      console.log(body);
+    });
+    req.on("end", () => {
+      const bufferTostring = Buffer.concat(body).toString();
+      const newData = JSON.parse(bufferTostring);
+      const newBookIndex = newData.id;
+  
+      fs.readFile(fullpath, "utf-8", (err, data) => {
+        if (err) {
+          res.writeHead(404);
+          console.log(err);
+          res.end('Couldn"t load all books');
+        }
+        let oldData = JSON.parse(data);
+        let compareIndex = oldData.findIndex(
+          (oldDataObject) => oldDataObject.id === newBookIndex
+        );
+        if (compareIndex === -1) {
+          res.writeHead(500);
+          console.log("error occured in loading");
+          res.end('error in looking for index');
+          return;
+        }
+      
+         oldData.splice(compareIndex,1);
+        console.log(oldData);
+  
+         fs.writeFile(fullpath, JSON.stringify(oldData), (err) => {
+           if (err) {
+            res.writeHead(404);
+             console.log(err);
+             res.end("error has occured since Id is not found");
+           }
+           console.log("Book successfully added");
+           res.end(JSON.stringify(newData));
+         });
+      });
+    });
+}
+const server = http.createServer(requestHandler);
+server.listen(port, function () {
+  console.log(`server successfully stated at http://localhost:${port}`);
+});
+
+
+
+
+
+
+
+const books = [
+    {
+        id : 1,
+        bookTitle:'All that shines isn\'t glamour',
+        bookCover: 'Black diamond',
+        ISBN: '123-234',
+        Year: '2004',
+        author: 'Musa Ojo'
+    },
+    {
+        id : 2,
+        bookTitle:'Lions king',
+        bookCover: 'Lion Icon',
+        ISBN: '123-654',
+        Year: '2005',
+        author: 'wole soyinka'
+    },
+    {
+        id : 3,
+        bookTitle:'Purple Hibiscus',
+        bookCover: 'flower cartoon',
+        ISBN: '123-123',
+        Year: '2005',
+        author: 'chimanmanda'
+    },
+    {
+        id : 4,
+        bookTitle:'Tribesmen',
+        bookCover: 'black symbols',
+        ISBN: '123-222',
+        Year: '2008',
+        author: 'Kenny Onifade'
+    }
+];
+
+const author = [
+   {
+    name:'wole soyinka',
+    id:1,
+    country:'Nigeria'
+   },
+
+   {
+    name:'Paul Gambit',
+    id:2,
+    country:'USA'
+   },
+   {
+    name:'Late Chinua achebe',
+    id:3,
+    country:'Nigeria'
+   },
+   {
+    name:'Koffi anan',
+    id:4,
+    country:'Ghana'
+   },
+];
+
+module.exports =  {
+    books,
+    author
+};
+
+
+// get http and start server
+
+const http = require("http");
+const { author, books } = require("./bookstore");
+const port = 8090;
+const LOCALHOST = "localhost";
+
+function serverHandler(req, res) {
+  switch (req.url) {
+    case "/books/author":
+      res.writeHead(200);
+      console.log("Not yet available");
+      break;
+
+    case "/books":
+      res.writeHead(200);
+      res.end(JSON.stringify(books));
+      break;
+
+    case "/author":
+      res.end(JSON.stringify(author[0]));
+      break;
+    default:
+      res.writeHead(404);
+      console.log("Routes not found, Please check again");
+  }
+
+  res.end();
+}
+const server = http.createServer(serverHandler);
+
+server.listen(port, LOCALHOST, () => {
+  console.log(`server successfully created at http://${LOCALHOST}:${port}`);
+});
+
+//middleware and express router
+using middleware
+const express = require('express');
+const port = 5050;
+const app = express();
+
+const bodyParser = require('morgan');
+
+app.use(bodyParser.json());
+
+app.use((req,res,next) => {
+    let apikey = req.query.apikey;
+    if (apikey){
+        next();
+    }
+    res.status(300).send('unauthorised');
+});
+
+app.use((req,res,next) => {
+    const apikey =  req.body.apikey;
+    if (apikey){
+        console.log(body.req);
+        next();
+    }
+    else{
+        res.status(400).send('Error because nothing was added');
+    }
+});
+
+app.get("/users",(req,res) => {
+    res.status(200)
+    res.json(
+        [
+        {
+            
+            id : 1,
+            "name" : "musa Ojo",
+            "city" : "Ibadan"
+        },
+        {
+            id : 12,
+            "name" : "musa mansa",
+            "city" : "Ibadan ologuneru"
+        }]
+    
+    );
+});
+
+app.listen(port,() => {
+    console.log(`Your connection is successful at http://localhost:${port}`);
+});
+
+// using multiurl
+const users = [
+    {
+        id : 1,
+        name : 'musa',
+        description : 'Under pressure from Tiidelab',
+        stack: 'backend'
+    },
+
+    {
+        id : 2,
+        name : 'tolu',
+        description : 'Under pressure from Tiidelab task',
+        stack: 'backend'
+    }
+];
+
+const roles = [
+    {
+        id : 3,
+        name : 'musamusa',
+        description : 'Uunder nder pressure from Tiidelab',
+        stack: 'backend'
+    },
+
+    {
+        id : 4,
+        name : 'tolutolu',
+        description : 'Under pressure from Tiidelab task',
+        stack: 'backend'
+    }
+];
+
+app.get('/users/:id',(req,res) => {
+    let id = req.params.id;
+    let user = users.find( user => user.id === parseInt(id) && user.name === name);
+    if (!user){
+        res.status(404).send('not found');
+    }
+    res.json(user);
+});
+
+app.get('/users/:id/:name',(req,res) => {
+    let id = req.params.id;
+    let name = req.params.name;
+    let user = users.find( user => user.id === parseInt(id) && user.name === name);
+    if (!user){
+        res.status(404).send('not found');
+    }
+    res.json(user);
+});
+
+//routerexpress 
+const express = require('express');
+const port = 8080;
+const app = express();
+const logger = require('morgan');
+const bodyParser = require('body-parser');
+
+const bookRouter = require('./routes/books');
+
+app.use('/books',bookRouter);
+
+app.get('/',(req,res) => {
+    res.send('welcome to our home page');
+});
+
+app.get('/about',(req,res) => {
+    res.send('welcome to our about page');
+});
+
+app.get('/contact',(req,res) => {
+    res.send('welcome to our contact page');
+});
+
+app.listen(port,() => {
+    console.log(`Your connection is successful at http://localhost:${port}`);
+});
+
+routerexpress book
+const express = require('express');
+const bookRouter = express.Router();
+const bodyParser = require('body-parser');
+
+const books = [
+    {
+        id : 1,
+        bookTitle:'All that shines isn\'t glamour',
+        bookCover: 'Black diamond',
+        ISBN: '123-234',
+        Year: '2004',
+        author: 'Musa Ojo'
+    },
+    {
+        id : 2,
+        bookTitle:'Lions king',
+        bookCover: 'Lion Icon',
+        ISBN: '123-654',
+        Year: '2005',
+        author: 'wole soyinka'
+    },
+    {
+        id : 3,
+        bookTitle:'Purple Hibiscus',
+        bookCover: 'flower cartoon',
+        ISBN: '123-123',
+        Year: '2005',
+        author: 'chimanmanda'
+    },
+    {
+        id : 4,
+        bookTitle:'Tribesmen',
+        bookCover: 'black symbols',
+        ISBN: '123-222',
+        Year: '2008',
+        author: 'Kenny Onifade'
+    }
+];
+
+// all the method associated with this router
+
+bookRouter.get('/',(req,res) => {
+    res.json(books);
+});
+
+bookRouter.get('/books/:id',(req,res) => {
+    let id = req.params.id;
+    let eachBook = books.find(book => book.id == id);
+        if(!eachBook){
+            res.status(404).send('Book with this id not found');
+            return;
+        }
+        res.send(eachBook);
+    }
+);
+
+bookRouter.post('/',() => {
+    let book = req.body;
+     books.push(book);
+     res.json(books);
+});
+
+bookRouter.put('/books:id',(req,res) => {
+    let id = req.params.id;
+    let newBook = books.find(book => book.id === id);
+    if (!newBook){
+        res.status(400).send('Book not found');
+        return;
+    }
+    res.json(books[newBook]);
+});
+
+bookRouter.delete('/books:id',(req,res) => {
+    let id = req.params.id;
+    let newBook = books.findIndex(book => book.id === id);
+    if (!newBook){
+        res.status(400).send('Book not found');
+        return;
+    }
+    books.splice(newBook,1);
+    res.json(books);
+});
+
+module.exports = bookRouter;
+
+
+
+
+
