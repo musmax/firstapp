@@ -1,6 +1,6 @@
 const { rejects } = require("assert");
-const path = require("fs");
-const { resolve } = require("path");
+const fs = require("fs");
+const path = require("path");
 const fullpath = path.join(__dirname,"users.json");
 
 function authenticate(req,res) {
